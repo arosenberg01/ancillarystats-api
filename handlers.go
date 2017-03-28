@@ -23,8 +23,20 @@ type Player struct {
 	Weight int `json:"weight"`
 }
 
-var leaderCategories = map[string]bool {
-	"pts": true,
+type CategoryLeaders struct {
+	Category string `json:"category"`
+	Leaders []Leader
+}
+
+type Leader struct {
+	Name string `json:"name"`
+	Value string `json:"value"`
+}
+
+var leaderCategories = map[string]string {
+	"points": "pts",
+	"rebounds": "total_reb",
+	"assists": "ast",
 }
 
 
@@ -32,7 +44,6 @@ func PlayerHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var name, number, team, pos string
 	var height, weight int
-
 
 	datasource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
 	db, err = sql.Open("mysql", datasource)
@@ -71,7 +82,6 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		player_id string
 		cat_avg string
-		category string
 	)
 	vars := mux.Vars(r)
 	datasource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
@@ -82,9 +92,11 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	
-	_, ok := leaderCategories[vars["category"]]
+	category, ok := leaderCategories[vars["category"]]
+	leaders := []Leader{}
 
 	if ok {
+
 		query := "SELECT player_id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10"
 		rows, err := db.Query(query)
 
@@ -97,11 +109,22 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 
-			log.Println(player_id, cat_avg)
+			leader := Leader{player_id, cat_avg}
+			leaders = append(leaders, leader)
 		}
 
 		if err = rows.Err(); err != nil {
 			log.Fatal(err)
 		}
 	}
+
+	jsonResponse, err := json.Marshal(leaders)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
 }
