@@ -18,13 +18,13 @@ func NewRouter() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
-		handler := Logger(route.HandlerFunc, route.Name)
+		wrappedHandler := Logger(route.HandlerFunc, route.Name)
 
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			Handler(handler)
+			Handler(wrappedHandler)
 	}
 
 	return router
@@ -36,5 +36,11 @@ var routes = Routes{
 		"GET",
 		"/player/{player_id}",
 		PlayerHandler,
+	},
+	Route{
+		"Leaders",
+		"GET",
+		"/leaders/{category}",
+		LeadersHandler,
 	},
 }
