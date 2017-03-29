@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
 	"net/http"
 	"github.com/gorilla/mux"
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
 	"os"
-	"log"
 )
 
 var db *sql.DB
@@ -40,23 +38,7 @@ var leaderCategories = map[string]string {
 }
 
 
-type appHandler func(http.ResponseWriter, *http.Request) (int, error)
-
-func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if status, err := fn(w, r); err != nil {
-		switch status {
-			case http.StatusNotFound:
-				http.NotFound(w, r)
-			case http.StatusInternalServerError:
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			default:
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-	}
-}
-
-
-func PlayerHandler(w http.ResponseWriter, r *http.Request) {
+func PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	var name, number, team, pos string
 	var height, weight int
@@ -65,36 +47,38 @@ func PlayerHandler(w http.ResponseWriter, r *http.Request) {
 	db, err = sql.Open("mysql", datasource)
 
 	if err != nil {
-	  fmt.Println(err)
+		return http.StatusInternalServerError, err
 	}
 
 	defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
-	  fmt.Println(err)
+		return http.StatusInternalServerError, err
 	}
 
 	row := db.QueryRow("SELECT name, number, team, pos, height, weight FROM nba_player WHERE id=?;", vars["player_id"])
 	err = row.Scan(&name, &number, &team, &pos, &height, &weight)
 
 	if err != nil {
-		fmt.Println(err)
+		return http.StatusInternalServerError, err
 	}
 
 	player := Player{name, number, team, pos, height, weight}
 	jsonResponse, err := json.Marshal(player)
 
 	if err != nil {
-		fmt.Println(err)
+		return http.StatusInternalServerError, err
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
+
+	return http.StatusOK, nil
 }
 
-func LeadersHandler(w http.ResponseWriter, r *http.Request) {
+func LeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	var (
 		player_id string
 		cat_avg string
@@ -105,7 +89,7 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 	db, err = sql.Open("mysql", datasource)
 
 	if err != nil {
-		log.Fatal(err)
+		return http.StatusInternalServerError, err
 	}
 
 	category, ok := leaderCategories[vars["category"]]
@@ -122,7 +106,7 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 			err := rows.Scan(&player_id, &cat_avg)
 
 			if err != nil {
-				log.Fatal(err)
+				return http.StatusInternalServerError, err
 			}
 
 			leader := Leader{player_id, cat_avg}
@@ -130,17 +114,19 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err = rows.Err(); err != nil {
-			log.Fatal(err)
+			return http.StatusInternalServerError, err
 		}
 	}
 
 	jsonResponse, err := json.Marshal(leaders)
 
 	if err != nil {
-		fmt.Println(err)
+		return http.StatusInternalServerError, err
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonResponse)
+
+	return http.StatusOK, nil
 }

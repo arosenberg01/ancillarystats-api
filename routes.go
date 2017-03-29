@@ -2,23 +2,40 @@ package main
 
 import (
 	"net/http"
+	"log"
 	"github.com/gorilla/mux"
 )
 
 type Route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
+	Name    string
+	Method  string
+	Pattern string
+	Handler http.Handler
 }
 
 type Routes []Route
 
-func NewRouter() *mux.Router {
+type appHandler func(http.ResponseWriter, *http.Request) (int, error)
 
+func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if status, err := fn(w, r); err != nil {
+		log.Fatal(err)
+
+		switch status {
+			case http.StatusNotFound:
+				http.NotFound(w, r)
+			case http.StatusInternalServerError:
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			default:
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
+}
+
+func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
-		wrappedHandler := Logger(route.HandlerFunc, route.Name)
+		wrappedHandler := Logger(route.Handler, route.Name)
 
 		router.
 			Methods(route.Method).
@@ -35,12 +52,12 @@ var routes = Routes{
 		"Player",
 		"GET",
 		"/player/{player_id}",
-		PlayerHandler,
+		appHandler(PlayerHandler),
 	},
 	Route{
 		"Leaders",
 		"GET",
 		"/leaders/{category}",
-		LeadersHandler,
+		appHandler(LeadersHandler),
 	},
 }
