@@ -40,6 +40,22 @@ var leaderCategories = map[string]string {
 }
 
 
+type appHandler func(http.ResponseWriter, *http.Request) (int, error)
+
+func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if status, err := fn(w, r); err != nil {
+		switch status {
+			case http.StatusNotFound:
+				http.NotFound(w, r)
+			case http.StatusInternalServerError:
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			default:
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+	}
+}
+
+
 func PlayerHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var name, number, team, pos string
@@ -89,9 +105,9 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) {
 	db, err = sql.Open("mysql", datasource)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
-	
+
 	category, ok := leaderCategories[vars["category"]]
 	leaders := []Leader{}
 
