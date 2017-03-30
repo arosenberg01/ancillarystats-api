@@ -12,14 +12,12 @@ type Route struct {
 	Pattern string
 	Handler http.Handler
 }
-
 type Routes []Route
-
 type appHandler func(http.ResponseWriter, *http.Request) (int, error)
 
 func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if status, err := fn(w, r); err != nil {
-		log.Fatal(err)
+		log.Print(err)
 
 		switch status {
 			case http.StatusNotFound:

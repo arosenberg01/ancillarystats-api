@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/go-sql-driver/mysql"
+	"errors"
 )
 
 var db *sqlx.DB
@@ -42,11 +43,9 @@ var leaderCategories = map[string]string {
 
 func PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	datasource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
-	db = sqlx.MustConnect("mysql", datasource)
-
+	dataSource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
+	db = sqlx.MustConnect("mysql", dataSource)
 	player := Player{}
-
 	err = db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", vars["player_id"])
 
 	if err != nil {
@@ -68,25 +67,17 @@ func PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 
 func LeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	datasource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
-	db = sqlx.MustConnect("mysql", datasource)
-
+	dataSource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
+	db = sqlx.MustConnect("mysql", dataSource)
 	category, ok := leaderCategories[vars["category"]]
 
 	if ok {
-
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-
 		leaders := []Leader{}
 		err = db.Select(&leaders, "SELECT player_id AS id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10")
 
 		if err != nil {
-			fmt.Println(err)
+			return http.StatusInternalServerError, err
 		}
-
-		fmt.Println(leaders)
 
 		jsonResponse, err := json.Marshal(leaders)
 
@@ -99,6 +90,7 @@ func LeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 		w.Write(jsonResponse)
 		return http.StatusOK, nil
 	} else {
-		return http.StatusInternalServerError, err
+
+		return http.StatusNotFound, errors.New("leaders category not available")
 	}
 }
