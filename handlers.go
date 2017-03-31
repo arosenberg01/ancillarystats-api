@@ -1,39 +1,14 @@
 package main
 
 import (
-	"os"
-	"fmt"
 	"net/http"
-	_ "database/sql"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/go-sql-driver/mysql"
 	"errors"
+	"github.com/gorilla/mux"
+	_ "database/sql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var db *sqlx.DB
-var err error
-
-type Player struct {
-	Id string `json:"id" db:"id"`
-	Name string `json:"name" db:"name"`
-	Number string `json:"number" db:"number"`
-	Team string `json:"team" db:"team"`
-	Position string `json:"position" db:"pos"`
-	Height int `json:"height" db:"height"`
-	Weight int `json:"weight" db:"weight"`
-}
-
-type CategoryLeaders struct {
-	Category string `json:"category"`
-	Leaders []Leader
-}
-
-type Leader struct {
-	Id string `json:"id" db:"id"`
-	CatAvg string `json:"value" db:"cat_avg"`
-}
 
 var leaderCategories = map[string]string {
 	"points": "pts",
@@ -41,12 +16,9 @@ var leaderCategories = map[string]string {
 	"assists": "ast",
 }
 
-func PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+func (env *Env) PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	dataSource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
-	db = sqlx.MustConnect("mysql", dataSource)
-	player := Player{}
-	err = db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", vars["player_id"])
+	player, err := PlayerById(env.db, vars["player_id"])
 
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -65,15 +37,12 @@ func PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	return http.StatusOK, nil
 }
 
-func LeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+func (env *Env) LeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	dataSource := os.Getenv("USER") + ":@/" + os.Getenv("DB_NAME")
-	db = sqlx.MustConnect("mysql", dataSource)
 	category, ok := leaderCategories[vars["category"]]
 
 	if ok {
-		leaders := []Leader{}
-		err = db.Select(&leaders, "SELECT player_id AS id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10")
+		leaders, err := Leaders(env.db, category)
 
 		if err != nil {
 			return http.StatusInternalServerError, err
