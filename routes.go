@@ -30,7 +30,22 @@ func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewRouter() *mux.Router {
+func NewRouter(env *Env) *mux.Router {
+	var routes = Routes{
+		Route{
+			"Player",
+			"GET",
+			"/player/{player_id}",
+			appHandler(env.PlayerHandler),
+		},
+		Route{
+			"Leaders",
+			"GET",
+			"/leaders/{category}",
+			appHandler(env.LeadersHandler),
+		},
+	}
+
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
 		wrappedHandler := Logger(route.Handler, route.Name)
@@ -45,17 +60,4 @@ func NewRouter() *mux.Router {
 	return router
 }
 
-var routes = Routes{
-	Route{
-		"Player",
-		"GET",
-		"/player/{player_id}",
-		appHandler(PlayerHandler),
-	},
-	Route{
-		"Leaders",
-		"GET",
-		"/leaders/{category}",
-		appHandler(LeadersHandler),
-	},
-}
+
