@@ -11,4 +11,4 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-      - docker push arosenberg01:nbapi:latest
+      - docker push arosenberg01/nbapi:latest
