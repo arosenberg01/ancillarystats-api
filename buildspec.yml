@@ -1,0 +1,14 @@
+version: 0.1
+
+phases:
+  pre_build:
+    commands:
+      - docker login -u=$DOCKER_USER -p=$DOCKER_PW
+  build:
+    commands:
+      - echo Build started on `date`
+      - docker build -t arosenberg01/nbapi:latest .
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - docker push arosenberg01:nbapi:latest

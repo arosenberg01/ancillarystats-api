@@ -13,19 +13,13 @@ type Env struct {
 }
 
 func main() {
-	var datasource string
+	datasource := fmt.Sprintf("%s:%s@tcp(%s)/%s", os.Getenv("DB_USER"), os.Getenv("DB_PW"), os.Getenv("DB_INSTANCE"), os.Getenv("DB_NAME"))
 
-	appEnv := os.Getenv("APP_ENV")
+	fmt.Printf(datasource)
 
-	if appEnv == "loc" {
-		datasource = os.Getenv("NBA_DSN")
-	} else {
-		datasource = fmt.Sprintf("%s:%s@tcp(%s)/%s", os.Getenv("DB_USER"), os.Getenv("DB_PW"), os.Getenv("DB_INSTANCE"), os.Getenv("DB_NAME"))
-	}
-	
 	db := NewDB(datasource)
 	env := &Env{db}
 	router := NewRouter(env)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":3000", router))
 }
