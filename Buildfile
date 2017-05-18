@@ -1,1 +1,1 @@
-make: ./build.sh
+make: sudo ./build.sh
