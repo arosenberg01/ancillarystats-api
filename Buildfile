@@ -1,1 +1,2 @@
-make: sudo ./build.sh
+make: chmod +x build.sh
+make: ./build.sh
