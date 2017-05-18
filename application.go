@@ -21,5 +21,12 @@ func main() {
 	env := &Env{db}
 	router := NewRouter(env)
 
-	log.Fatal(http.ListenAndServe(":3000", router))
+	port := "5000"
+	if envPort := os.Getenv("PORT"); envPort != "" {
+		port = envPort
+	}
+
+	port = ":" + port
+
+	log.Fatal(http.ListenAndServe(port, router))
 }
