@@ -50,6 +50,12 @@ func NewRouter(env *Env) *mux.Router {
 			"/teams",
 			appHandler(env.TeamsHandler),
 		},
+		Route{
+			"Roster",
+			"GET",
+			"/rosters/{team_id}",
+			appHandler(env.RosterHandler),
+		},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)

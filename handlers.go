@@ -82,3 +82,23 @@ func (env *Env) TeamsHandler(w http.ResponseWriter, r *http.Request) (int, error
 	w.Write(jsonResponse)
 	return http.StatusOK, nil
 }
+
+func (env *Env) RosterHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+	vars := mux.Vars(r)
+	roster, err := Roster(env.db, vars["team_id"])
+
+	if err != nil {
+		return http.StatusNotFound, err
+	}
+
+	jsonResponse, err := json.Marshal(roster)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+	return http.StatusOK, nil
+}

@@ -60,3 +60,14 @@ func Teams(db *sqlx.DB) ([]Team, error) {
 
 	return teams, nil
 }
+
+func Roster(db *sqlx.DB, team_id string) ([]Player, error) {
+	roster := []Player{}
+	err := db.Select(&roster, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE team=?;", team_id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return roster, nil
+}
