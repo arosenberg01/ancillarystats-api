@@ -14,6 +14,33 @@ type Player struct {
 	Weight int `json:"weight" db:"weight"`
 }
 
+type Game struct {
+	PlayerId string `json:"player_id" db:"player_id"`
+	Date string `json:"date" db:"date"`
+	Opponent string `json:"opponent" db:"opp"`
+	Away int `json:"away" db:"away"`
+	Score string `json:"score" db:"score"`
+	SecondsPlayed int `json:"seconds_played" db:"sec_played"`
+	FieldGoalsMade int `json:"field_goals_made" db:"fgm"`
+	FieldGoalsAttempted int `json:"field_goals_attempted" db:"fga"`
+	FieldGoalPercentage float32 `json:"field_goal_percentage" db:"fg_pct"`
+	ThreePointersMade int `json:"three_pointers_made" db:"three_pm"`
+	ThreePointersAttempted int `json:"three_pointers_attempted" db:"three_pa"`
+	ThreePointPercentage float32 `json:"three_pointer_percentage" db:"three_pct"`
+	FreeThrowsMade int `json:"free_throws_made" db:"ftm"`
+	FreeThrowsAttempted int `json:"free_throws_attempted" db:"fta"`
+	FreeThrowPercentage float32 `json:"free_throw_percentage" db:"ft_pct"`
+	OffensiveRebounds int `json:"offensive_rebounds" db:"off_reb"`
+	DefensiveRebounds int `json:"defensive_rebounds" db:"def_reb"`
+	TotalRebounds int `json:"total_rebounds" db:"total_reb"`
+	Assists int `json:"assists" db:"ast"`
+	Turnovers int `json:"turnovers" db:"to"`
+	Steals int `json:"steals" db:"stl"`
+	Blocks int `json:"blocks" db:"blk"`
+	PersonalFouls int `json:"personal_fouls" db:"pf"`
+	Points int `json:"points" db:"pts"`
+}
+
 type CategoryLeaders struct {
 	Category string `json:"category"`
 	Leaders []CategoryLeader
@@ -70,4 +97,15 @@ func Roster(db *sqlx.DB, team_id string) ([]Player, error) {
 	}
 
 	return roster, nil
+}
+
+func Games(db *sqlx.DB, player_id string) ([]Game, error) {
+	games := []Game{}
+	err := db.Select(&games, "SELECT player_id, date, opp, away, COALESCE(score, '') as score, sec_played, fgm, fga, fg_pct, three_pm, three_pa, three_pct, ftm, fta, ft_pct, off_reb, def_reb, total_reb, ast, `to` FROM nba_game WHERE player_id=?;", player_id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return games, nil
 }

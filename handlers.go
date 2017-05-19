@@ -102,3 +102,23 @@ func (env *Env) RosterHandler(w http.ResponseWriter, r *http.Request) (int, erro
 	w.Write(jsonResponse)
 	return http.StatusOK, nil
 }
+
+func (env *Env) GamesHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+	vars := mux.Vars(r)
+	games, err := Games(env.db, vars["player_id"])
+
+	if err != nil {
+		return http.StatusNotFound, err
+	}
+
+	jsonResponse, err := json.Marshal(games)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+	return 200, nil
+}
