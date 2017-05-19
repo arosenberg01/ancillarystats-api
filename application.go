@@ -14,19 +14,14 @@ type Env struct {
 
 func main() {
 	datasource := fmt.Sprintf("%s:%s@tcp(%s)/%s", os.Getenv("DB_USER"), os.Getenv("DB_PW"), os.Getenv("DB_INSTANCE"), os.Getenv("DB_NAME"))
-
-	fmt.Printf(datasource)
-
 	db := NewDB(datasource)
 	env := &Env{db}
 	router := NewRouter(env)
 
-	port := "5000"
+	port := ":5000"
 	if envPort := os.Getenv("PORT"); envPort != "" {
-		port = envPort
+		port = ":" + envPort
 	}
-
-	port = ":" + port
 
 	log.Fatal(http.ListenAndServe(port, router))
 }

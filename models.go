@@ -24,6 +24,10 @@ type CategoryLeader struct {
 	CatAvg string `json:"value" db:"cat_avg"`
 }
 
+type Team struct {
+	Id string `json:"id" db:"id"`
+}
+
 func Leaders(db *sqlx.DB, category string) (CategoryLeaders, error) {
 	categoryLeaders := CategoryLeaders{category, []CategoryLeader{}}
 	err := db.Select(&categoryLeaders.Leaders, "SELECT player_id AS id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10")
@@ -40,8 +44,19 @@ func PlayerById(db *sqlx.DB, player_id string) (Player, error) {
 	err := db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", player_id)
 
 	if err != nil {
-		return player , err
+		return player, err
 	}
 
 	return player, nil
+}
+
+func Teams(db *sqlx.DB) ([]Team, error) {
+	teams := []Team{}
+	err := db.Select(&teams, "SELECT * FROM nba_team")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return teams, nil
 }

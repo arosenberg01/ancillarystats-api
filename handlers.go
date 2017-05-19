@@ -63,3 +63,22 @@ func (env *Env) LeadersHandler(w http.ResponseWriter, r *http.Request) (int, err
 		return http.StatusNotFound, errors.New("leaders category not available")
 	}
 }
+
+func (env *Env) TeamsHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+	teams, err := Teams(env.db)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	jsonResponse, err := json.Marshal(teams)
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+	return http.StatusOK, nil
+}
