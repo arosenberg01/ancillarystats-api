@@ -55,11 +55,6 @@ type Team struct {
 	Id string `json:"id" db:"id"`
 }
 
-
-
-////////////////////////////////////
-
-
 func (db *DB) NbaPlayer(player_id string) (Player, error) {
 	player := Player{}
 	err := db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", player_id)
@@ -105,66 +100,6 @@ func (db *DB) NbaRoster(team_id string) ([]Player, error) {
 }
 
 func (db *DB) NbaGames(player_id string) ([]Game, error) {
-	games := []Game{}
-	err := db.Select(&games, "SELECT player_id, date, opp, away, COALESCE(score, '') as score, sec_played, fgm, fga, fg_pct, three_pm, three_pa, three_pct, ftm, fta, ft_pct, off_reb, def_reb, total_reb, ast, `to` FROM nba_game WHERE player_id=?;", player_id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return games, nil
-}
-
-////////////////////////////////////
-
-
-func Leaders(db *sqlx.DB, category string) (CategoryLeaders, error) {
-	categoryLeaders := CategoryLeaders{category, []CategoryLeader{}}
-	err := db.Select(&categoryLeaders.Leaders, "SELECT player_id AS id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10")
-
-	if err != nil {
-		return categoryLeaders, err
-	}
-
-	return categoryLeaders, nil
-}
-
-
-
-func PlayerById(db *sqlx.DB, player_id string) (Player, error) {
-	player := Player{}
-	err := db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", player_id)
-
-	if err != nil {
-		return player, err
-	}
-
-	return player, nil
-}
-
-func Teams(db *sqlx.DB) ([]Team, error) {
-	teams := []Team{}
-	err := db.Select(&teams, "SELECT * FROM nba_team")
-
-	if err != nil {
-		return nil, err
-	}
-
-	return teams, nil
-}
-
-func Roster(db *sqlx.DB, team_id string) ([]Player, error) {
-	roster := []Player{}
-	err := db.Select(&roster, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE team=?;", team_id)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return roster, nil
-}
-
-func Games(db *sqlx.DB, player_id string) ([]Game, error) {
 	games := []Game{}
 	err := db.Select(&games, "SELECT player_id, date, opp, away, COALESCE(score, '') as score, sec_played, fgm, fga, fg_pct, three_pm, three_pa, three_pct, ftm, fta, ft_pct, off_reb, def_reb, total_reb, ast, `to` FROM nba_game WHERE player_id=?;", player_id)
 

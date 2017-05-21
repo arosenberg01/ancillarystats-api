@@ -18,12 +18,9 @@ type DB struct {
 	*sqlx.DB
 }
 
-//func NewDB(dataSource string) (*sqlx.DB) {
 func NewDB(dataSource string) (*DB) {
-
 	db := sqlx.MustConnect("mysql", dataSource)
 
-	//return db
 	return &DB{db}
 }
 
