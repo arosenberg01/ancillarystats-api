@@ -4,15 +4,14 @@ import (
 	_ "database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"database/sql"
 )
 
 type Datastore interface {
 	NbaPlayer(string) (Player, error)
-	NbaCategoryLeaders (CategoryLeaders, error)
-	NbaTeams ([]Team, error)
-	NbaRoster([]Player, error)
-	NbaGames([]Game, error)
+	NbaCategoryLeaders(string) (CategoryLeaders, error)
+	NbaTeams() ([]Team, error)
+	NbaRoster(string) ([]Player, error)
+	NbaGames(string) ([]Game, error)
 }
 
 type DB struct {

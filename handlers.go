@@ -18,7 +18,8 @@ var leaderCategories = map[string]string {
 
 func (env *Env) PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	player, err := PlayerById(env.db, vars["player_id"])
+	//player, err := PlayerById(env.db, vars["player_id"])
+	player, err := env.db.NbaPlayer(vars["player_id"])
 
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -41,8 +42,10 @@ func (env *Env) LeadersHandler(w http.ResponseWriter, r *http.Request) (int, err
 	vars := mux.Vars(r)
 	category, ok := leaderCategories[vars["category"]]
 
+
 	if ok {
-		leaders, err := Leaders(env.db, category)
+		//leaders, err := Leaders(env.db, category)
+		leaders, err := env.db.NbaCategoryLeaders(category)
 
 		if err != nil {
 			return http.StatusInternalServerError, err
@@ -65,7 +68,8 @@ func (env *Env) LeadersHandler(w http.ResponseWriter, r *http.Request) (int, err
 }
 
 func (env *Env) TeamsHandler(w http.ResponseWriter, r *http.Request) (int, error) {
-	teams, err := Teams(env.db)
+	//teams, err := Teams(env.db)
+	teams, err := env.db.NbaTeams()
 
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -85,7 +89,8 @@ func (env *Env) TeamsHandler(w http.ResponseWriter, r *http.Request) (int, error
 
 func (env *Env) RosterHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	roster, err := Roster(env.db, vars["team_id"])
+	//roster, err := Roster(env.db, vars["team_id"])
+	roster, err := env.db.NbaRoster(vars["team_id"])
 
 	if err != nil {
 		return http.StatusNotFound, err
@@ -105,7 +110,9 @@ func (env *Env) RosterHandler(w http.ResponseWriter, r *http.Request) (int, erro
 
 func (env *Env) GamesHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
-	games, err := Games(env.db, vars["player_id"])
+	//games, err := Games(env.db, vars["player_id"])
+	games, err := env.db.NbaGames(vars["player_id"])
+
 
 	if err != nil {
 		return http.StatusNotFound, err
