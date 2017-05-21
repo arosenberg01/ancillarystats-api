@@ -8,7 +8,11 @@ import (
 )
 
 type Datastore interface {
-	GetNbaPlayer(string) (Player, error)
+	NbaPlayer(string) (Player, error)
+	NbaCategoryLeaders (CategoryLeaders, error)
+	NbaTeams ([]Team, error)
+	NbaRoster([]Player, error)
+	NbaGames([]Game, error)
 }
 
 type DB struct {
