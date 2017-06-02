@@ -10,21 +10,27 @@ import (
 )
 
 var leaderCategories = map[string]string {
-	"points": "pts",
-	"rebounds": "total_reb",
+	"field_goals_made": "fgm",
+	"field_goals_attempted": "fga",
+	"field_goal_percentage": "fg_pct",
+	"three_pointers_made": "three_pm",
+	"three_pointers_attempted": "three_pa",
+	"three_pointer_percentage": "three_pct",
+	"free_throws_made": "ftm",
+	"free_throws_attempted": "fta",
+	"free_throw_percentage": "ft_pct",
+	"offensive_rebounds": "off_reb",
+	"defensive_rebounds": "def_reb",
+	"total_rebounds": "total_reb",
 	"assists": "ast",
+	"turnovers": "to",
+	"steals": "stl",
+	"blocks": "blk",
+	"personal_fouls": "pf",
+	"points": "pts",
 }
 
-func (env *Env) PlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
-	vars := mux.Vars(r)
-	player, err := env.db.NbaPlayer(vars["player_id"])
-
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	jsonResponse, err := json.Marshal(player)
-
+func SendJsonResponse(w http.ResponseWriter, jsonResponse []byte, err error) (int, error) {
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -36,10 +42,29 @@ func (env *Env) PlayerHandler(w http.ResponseWriter, r *http.Request) (int, erro
 	return http.StatusOK, nil
 }
 
-func (env *Env) LeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+func (env *Env) NbaPlayerHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+	vars := mux.Vars(r)
+	player, err := env.db.NbaPlayer(vars["player_id"])
+
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	jsonResponse, err := json.Marshal(player)
+
+	return SendJsonResponse(w, jsonResponse, err)
+}
+
+func (env *Env) NbaCategoriesHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+	availableCategories := StrMapKeys(leaderCategories)
+	jsonResponse, err := json.Marshal(availableCategories)
+
+	return SendJsonResponse(w, jsonResponse, err)
+}
+
+func (env *Env) NbaLeadersHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	category, ok := leaderCategories[vars["category"]]
-
 
 	if ok {
 		leaders, err := env.db.NbaCategoryLeaders(category)
@@ -50,21 +75,14 @@ func (env *Env) LeadersHandler(w http.ResponseWriter, r *http.Request) (int, err
 
 		jsonResponse, err := json.Marshal(leaders)
 
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResponse)
-		return http.StatusOK, nil
+		return SendJsonResponse(w, jsonResponse, err)
 	} else {
 
 		return http.StatusNotFound, errors.New("leaders category not available")
 	}
 }
 
-func (env *Env) TeamsHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+func (env *Env) NbaTeamsHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	teams, err := env.db.NbaTeams()
 
 	if err != nil {
@@ -73,17 +91,10 @@ func (env *Env) TeamsHandler(w http.ResponseWriter, r *http.Request) (int, error
 
 	jsonResponse, err := json.Marshal(teams)
 
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
-	return http.StatusOK, nil
+	return SendJsonResponse(w, jsonResponse, err)
 }
 
-func (env *Env) RosterHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+func (env *Env) NbaRosterHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	roster, err := env.db.NbaRoster(vars["team_id"])
 
@@ -93,17 +104,10 @@ func (env *Env) RosterHandler(w http.ResponseWriter, r *http.Request) (int, erro
 
 	jsonResponse, err := json.Marshal(roster)
 
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
-	return http.StatusOK, nil
+	return SendJsonResponse(w, jsonResponse, err)
 }
 
-func (env *Env) GamesHandler(w http.ResponseWriter, r *http.Request) (int, error) {
+func (env *Env) NbaGamesHandler(w http.ResponseWriter, r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	games, err := env.db.NbaGames(vars["player_id"])
 
@@ -113,12 +117,5 @@ func (env *Env) GamesHandler(w http.ResponseWriter, r *http.Request) (int, error
 
 	jsonResponse, err := json.Marshal(games)
 
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonResponse)
-	return 200, nil
+	return SendJsonResponse(w, jsonResponse, err)
 }
