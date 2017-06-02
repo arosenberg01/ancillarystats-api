@@ -33,46 +33,55 @@ func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewRouter(env *Env) *mux.Router {
 	var routes = Routes{
 		Route{
-			"Player",
+			"NbaPlayer",
 			"GET",
-			"/player/{player_id}",
-			appHandler(env.PlayerHandler),
+			"/players/{player_id}",
+			appHandler(env.NbaPlayerHandler),
 		},
 		Route{
-			"Leaders",
+			"NbaLeaders",
 			"GET",
 			"/leaders/{category}",
-			appHandler(env.LeadersHandler),
+			appHandler(env.NbaLeadersHandler),
 		},
 		Route{
-			"Teams",
+			"NbaCategories",
+			"GET",
+			"/categories",
+			appHandler(env.NbaCategoriesHandler),
+		},
+		Route{
+			"NbaTeams",
 			"GET",
 			"/teams",
-			appHandler(env.TeamsHandler),
+			appHandler(env.NbaTeamsHandler),
 		},
 		Route{
-			"Roster",
+			"NbaRosters",
 			"GET",
 			"/rosters/{team_id}",
-			appHandler(env.RosterHandler),
+			appHandler(env.NbaRosterHandler),
 		},
 		Route{
-			"Games",
+			"NbaGames",
 			"GET",
 			"/games/{player_id}",
-			appHandler(env.GamesHandler),
+			appHandler(env.NbaGamesHandler),
 		},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
+
 	for _, route := range routes {
 		wrappedHandler := Logger(route.Handler, route.Name)
 
+
 		router.
 			Methods(route.Method).
-			Path(route.Pattern).
 			Name(route.Name).
-			Handler(wrappedHandler)
+			Handler(wrappedHandler).
+			PathPrefix("/v1/nba/").
+			Path(route.Pattern)
 	}
 
 	return router
