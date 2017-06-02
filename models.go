@@ -1,10 +1,6 @@
 package main
 
-import (
-	"github.com/jmoiron/sqlx"
-)
-
-type Player struct {
+type NbaPlayer struct {
 	Id string `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
 	Number string `json:"number" db:"number"`
@@ -14,7 +10,7 @@ type Player struct {
 	Weight int `json:"weight" db:"weight"`
 }
 
-type Game struct {
+type NbaGame struct {
 	PlayerId string `json:"player_id" db:"player_id"`
 	Date string `json:"date" db:"date"`
 	Opponent string `json:"opponent" db:"opp"`
@@ -41,22 +37,23 @@ type Game struct {
 	Points int `json:"points" db:"pts"`
 }
 
-type CategoryLeaders struct {
+type NbaCategoryLeaders struct {
 	Category string `json:"category"`
-	Leaders []CategoryLeader `json:"leaders"`
+	Leaders []NbaCategoryLeader `json:"leaders"`
 }
 
-type CategoryLeader struct {
+type NbaCategoryLeader struct {
 	Id string `json:"id" db:"id"`
 	CatAvg string `json:"value" db:"cat_avg"`
 }
 
-type Team struct {
+type NbaTeam struct {
 	Id string `json:"id" db:"id"`
 }
 
-func (db *DB) NbaPlayer(player_id string) (Player, error) {
-	player := Player{}
+// NbaPlayer retrieves the personal data for a single NBA player
+func (db *DB) NbaPlayer(player_id string) (NbaPlayer, error) {
+	player := NbaPlayer{}
 	err := db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", player_id)
 
 	if err != nil {
@@ -66,8 +63,9 @@ func (db *DB) NbaPlayer(player_id string) (Player, error) {
 	return player, nil
 }
 
-func (db *DB) NbaCategoryLeaders(category string) (CategoryLeaders, error) {
-	categoryLeaders := CategoryLeaders{category, []CategoryLeader{}}
+// NbaCategoryLeaders retrieves the top 10 leaders in an NBA statistical category (single season)
+func (db *DB) NbaCategoryLeaders(category string) (NbaCategoryLeaders, error) {
+	categoryLeaders := NbaCategoryLeaders{category, []NbaCategoryLeader{}}
 	err := db.Select(&categoryLeaders.Leaders, "SELECT player_id AS id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10")
 
 	if err != nil {
@@ -77,8 +75,9 @@ func (db *DB) NbaCategoryLeaders(category string) (CategoryLeaders, error) {
 	return categoryLeaders, nil
 }
 
-func (db *DB) NbaTeams() ([]Team, error) {
-	teams := []Team{}
+// NbaTeams retrieves all active NBA teams in a single season
+func (db *DB) NbaTeams() ([]NbaTeam, error) {
+	teams := []NbaTeam{}
 	err := db.Select(&teams, "SELECT * FROM nba_team")
 
 	if err != nil {
@@ -88,8 +87,9 @@ func (db *DB) NbaTeams() ([]Team, error) {
 	return teams, nil
 }
 
-func (db *DB) NbaRoster(team_id string) ([]Player, error) {
-	roster := []Player{}
+// NbaRoster retrieves all players on a single NBA team's roster
+func (db *DB) NbaRoster(team_id string) ([]NbaPlayer, error) {
+	roster := []NbaPlayer{}
 	err := db.Select(&roster, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE team=?;", team_id)
 
 	if err != nil {
@@ -99,8 +99,9 @@ func (db *DB) NbaRoster(team_id string) ([]Player, error) {
 	return roster, nil
 }
 
-func (db *DB) NbaGames(player_id string) ([]Game, error) {
-	games := []Game{}
+// NbaGames retrieves all available game data for a single NBA player
+func (db *DB) NbaGames(player_id string) ([]NbaGame, error) {
+	games := []NbaGame{}
 	err := db.Select(&games, "SELECT player_id, date, opp, away, COALESCE(score, '') as score, sec_played, fgm, fga, fg_pct, three_pm, three_pa, three_pct, ftm, fta, ft_pct, off_reb, def_reb, total_reb, ast, `to` FROM nba_game WHERE player_id=?;", player_id)
 
 	if err != nil {
