@@ -1,6 +1,7 @@
 package main
 
 type NbaPlayer struct {
+	Object string `json:"object"`
 	Id string `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
 	Number string `json:"number" db:"number"`
@@ -11,6 +12,7 @@ type NbaPlayer struct {
 }
 
 type NbaGame struct {
+	Object string `json:"object"`
 	PlayerId string `json:"player_id" db:"player_id"`
 	Date string `json:"date" db:"date"`
 	Opponent string `json:"opponent" db:"opp"`
@@ -37,7 +39,27 @@ type NbaGame struct {
 	Points int `json:"points" db:"pts"`
 }
 
+type NbaTeams struct {
+	Object string `json:"object"`
+	Teams []NbaTeam `json:"teams"`
+}
+
+type NbaTeam struct {
+	Id string `json:"id" db:"id"`
+}
+
+type NbaRoster struct {
+	Object string `json:"object"`
+	Players []NbaPlayer `json:"players"`
+}
+
+type NbaGames struct {
+	Object string `json:"object"`
+	Games []NbaGame `json:"games"`
+}
+
 type NbaCategoryLeaders struct {
+	Object string `json:"object"`
 	Category string `json:"category"`
 	Leaders []NbaCategoryLeader `json:"leaders"`
 }
@@ -47,13 +69,10 @@ type NbaCategoryLeader struct {
 	CatAvg string `json:"value" db:"cat_avg"`
 }
 
-type NbaTeam struct {
-	Id string `json:"id" db:"id"`
-}
-
 // NbaPlayer retrieves the personal data for a single NBA player
 func (db *DB) NbaPlayer(player_id string) (NbaPlayer, error) {
 	player := NbaPlayer{}
+	player.Object = "nba_player"
 	err := db.Get(&player, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE id=?;", player_id)
 
 	if err != nil {
@@ -65,7 +84,7 @@ func (db *DB) NbaPlayer(player_id string) (NbaPlayer, error) {
 
 // NbaCategoryLeaders retrieves the top 10 leaders in an NBA statistical category (single season)
 func (db *DB) NbaCategoryLeaders(category string) (NbaCategoryLeaders, error) {
-	categoryLeaders := NbaCategoryLeaders{category, []NbaCategoryLeader{}}
+	categoryLeaders := NbaCategoryLeaders{"nba_categories", category, []NbaCategoryLeader{}}
 	err := db.Select(&categoryLeaders.Leaders, "SELECT player_id AS id, AVG(" + category + ") AS cat_avg FROM nba_game GROUP BY player_id ORDER BY cat_avg DESC LIMIT 10")
 
 	if err != nil {
@@ -76,36 +95,47 @@ func (db *DB) NbaCategoryLeaders(category string) (NbaCategoryLeaders, error) {
 }
 
 // NbaTeams retrieves all active NBA teams in a single season
-func (db *DB) NbaTeams() ([]NbaTeam, error) {
-	teams := []NbaTeam{}
-	err := db.Select(&teams, "SELECT * FROM nba_team")
+func (db *DB) NbaTeams() (NbaTeams, error) {
+	teams := NbaTeams{"nba_teams", []NbaTeam{}}
+	err := db.Select(&teams.Teams, "SELECT * FROM nba_team")
 
 	if err != nil {
-		return nil, err
+		return teams, err
 	}
 
 	return teams, nil
 }
 
 // NbaRoster retrieves all players on a single NBA team's roster
-func (db *DB) NbaRoster(team_id string) ([]NbaPlayer, error) {
-	roster := []NbaPlayer{}
-	err := db.Select(&roster, "SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE team=?;", team_id)
+func (db *DB) NbaRoster(team_id string) (NbaRoster, error) {
+	roster := NbaRoster{"nba_roster", []NbaPlayer{}}
+	rows, err := db.Queryx("SELECT id, name, number, team, pos, height, weight FROM nba_player WHERE team=?;", team_id)
 
 	if err != nil {
-		return nil, err
+		return roster, err
+	}
+
+	for rows.Next() {
+		var player NbaPlayer
+		err = rows.StructScan(&player)
+		player.Object = "nba_player"
+		roster.Players = append(roster.Players, player)
+	}
+
+	if err = rows.Err(); err != nil {
+		return roster, err
 	}
 
 	return roster, nil
 }
 
 // NbaGames retrieves all available game data for a single NBA player
-func (db *DB) NbaGames(player_id string) ([]NbaGame, error) {
-	games := []NbaGame{}
-	err := db.Select(&games, "SELECT player_id, date, opp, away, COALESCE(score, '') as score, sec_played, fgm, fga, fg_pct, three_pm, three_pa, three_pct, ftm, fta, ft_pct, off_reb, def_reb, total_reb, ast, `to` FROM nba_game WHERE player_id=?;", player_id)
+func (db *DB) NbaGames(player_id string) (NbaGames, error) {
+	games := NbaGames{"nba_games", []NbaGame{}}
+	err := db.Select(&games.Games, "SELECT player_id, date, opp, away, COALESCE(score, '') as score, sec_played, fgm, fga, fg_pct, three_pm, three_pa, three_pct, ftm, fta, ft_pct, off_reb, def_reb, total_reb, ast, `to` FROM nba_game WHERE player_id=?;", player_id)
 
 	if err != nil {
-		return nil, err
+		return games, err
 	}
 
 	return games, nil
