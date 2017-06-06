@@ -75,7 +75,6 @@ func NewRouter(env *Env) *mux.Router {
 	for _, route := range routes {
 		wrappedHandler := Logger(route.Handler, route.Name)
 
-
 		router.
 			Methods(route.Method).
 			Name(route.Name).
